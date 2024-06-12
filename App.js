@@ -1,7 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-
-import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, TouchableNativeFeedback, Modal } from 'react-native';
+import Logo from './assets/Logo.png';
+import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, Modal, Image } from 'react-native';
 
 export default function App() {
   const [timeWorked, SetTimeWorked] = useState(0);
@@ -12,11 +13,31 @@ export default function App() {
   const [holidayModal, setHolidayModal] = useState(false);
 
   const setHolidays = () => {
-    setHolidayCounter(prev => timeWorked + prev);
-    if (holidayCounter%12 == 0){
-      setHolidayHeld(prev => prev + 1)
-    }
+    const total = holidayCounter + timeWorked;
+    setHolidayCounter(total);
+    
+    setHolidayHeld(Math.floor(total/24))
+    
     closeOvertimeModal();
+  }
+
+  const decreaseHolidays = () => {
+    const total = holidayCounter - (holiday*24);
+    if (total < 0){
+      setHolidayCounter(0)
+      setHolidayHeld(0)
+    }else{
+      setHolidayCounter(total)
+      setHolidayHeld(Math.floor(total/24))
+    }
+
+    closeHolidayModal();
+
+  }
+  
+  const reset = () => {
+    setHolidayHeld(0)
+    setHolidayCounter(0)
   }
 
   const closeHolidayModal = () => {
@@ -29,21 +50,26 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.counter}>{holidayCounter}</Text>
-      <Text style={styles.text}>Overtime hours </Text>
-      <Text style={styles.counter}>{holidayHeld}</Text>
-      <Text style={styles.text}>Holiday days </Text>
+      <Image style={{width:200, height:200, marginTop: 30,}}source={Logo}/>
+   
+      <View style={styles.infoContainer}>
+        <Text style={styles.counter}>{holidayCounter}</Text>
+        <Text style={styles.text}>Overtime hours </Text>
+        <Text style={styles.counter}>{holidayHeld}</Text>
+        <Text style={styles.text}>Holiday days </Text>
+      </View>
       
-      <StatusBar style="auto" />
-      <TouchableOpacity style={styles.button} onPress={setHolidays}>
-        <Text style={{fontSize: 30, color: '#E4ECF9',}}>Submit</Text>
-      </TouchableOpacity>
+    
+
       <View style={styles.tabBar}>
         <TouchableOpacity style={styles.tabBarItem} onPress={() => setOvertimeModal(true)}>
-          <Text style={{fontSize: 20, color: '#E4ECF9',}}>Add overtime</Text>
+        <Ionicons name="time-sharp" size={24} color="white" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabBarItem} onPress={() => setHolidayModal(true)}>
-          <Text style={{fontSize: 20, color: '#E4ECF9',}}>Add Holiday</Text>
+          <Ionicons name="airplane" size={24} color="white" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabBarItem} onPress={reset}>
+          <Ionicons name="refresh" size={24} color="white" />
         </TouchableOpacity>
       </View>
       {/* OVERTIME MODAL */}
@@ -55,7 +81,7 @@ export default function App() {
           setOvertimeModal(!overtimeModal);
         }}>
         <View style={styles.modalView}>
-          <Text style={styles.modalText}>Add Overtime</Text>
+          <Text style={styles.text}>Add Overtime</Text>
           <TextInput 
             style={styles.textBox}
             value={timeWorked}
@@ -63,6 +89,9 @@ export default function App() {
             keyboardType='numeric'/>
           <TouchableOpacity style={styles.button} onPress={setHolidays}>
             <Text style={{fontSize: 30, color: '#E4ECF9',}}>Submit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.buttonClose} onPress={closeOvertimeModal}>
+            <Text style={{fontSize: 30, color: '#E4ECF9',}}>Close</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -76,13 +105,18 @@ export default function App() {
           setHolidayModal(!holidayModal);
         }}>
         <View style={styles.modalView}>
-          <Text style={styles.modalText}>Add Holiday</Text>
+          <Text style={styles.text}>Add Holiday</Text>
           <TextInput 
             style={styles.textBox}
-            value={holidayHeld}
-            onChangeText={text => setHolidayHeld(Number(text))}
+            value={holiday}
+            onChangeText={text => setHoliday(Number(text))}
             keyboardType='numeric'/>
-          <Button title="Submit" onPress={closeHolidayModal} />
+          <TouchableOpacity style={styles.button} onPress={decreaseHolidays}>
+            <Text style={{fontSize: 30, color: '#E4ECF9',}}>Submit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.buttonClose} onPress={closeHolidayModal}>
+            <Text style={{fontSize: 30, color: '#E4ECF9',}}>Close</Text>
+          </TouchableOpacity>
         </View>
       </Modal>
     </View>
@@ -94,6 +128,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
+    
+  },
+
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
+  },
+
+  infoContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 200,
   },
 
   dateContainer: {
@@ -139,8 +188,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
+  buttonClose: {
+    height: 60,
+    backgroundColor: "#FFCCBC",
+    borderRadius: 10,
+    width: '100%',
+    marginTop: 10,
+    marginHorizontal: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
   counter:{
-    fontSize: 50,
+    fontSize: 70,
     color: '#FF8A65',
   },
 
@@ -149,6 +209,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     position: 'absolute',
+    borderTopStartRadius: 20,
+    borderTopEndRadius: 20,
     bottom: 0,
     width: '100%',
     height: 60,
@@ -162,19 +224,22 @@ const styles = StyleSheet.create({
   },
 
   modalView: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 22,
+    margin: 20,
     backgroundColor: 'white',
+    borderRadius: 20,
     padding: 35,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
     
   },
 
-  modalText: {
-    marginBottom: 15,
-    textAlign: 'center',
-  },
   
 
 });
